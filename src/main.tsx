@@ -1,4 +1,4 @@
-import Signing from '@pages/Signing.tsx';
+import Signing from '~/pages/Signing.tsx';
 import Verification from '@pages/Verification.tsx';
 import { setupStore } from '@store/store.ts';
 import '@styles/index.css';
