@@ -7,21 +7,32 @@ import { dilithiumVerifySig } from '@beechatnetwork/lib-dqx';
 import { Buffer } from 'buffer/index.js';
 import { sha256 } from 'js-sha256';
 
+import { useMutation, useQuery } from '@tanstack/react-query';
+import axios from '@utils/axios';
+
 const Verification = () => {
   const [publicKey, setPublicKey] = useState<string>('');
   const [signature, setSignature] = useState<string>('');
-  const [text, setText] = useState<string>('');
+  const [nftMetadata, setNftMetadata] = useState<string>('');
+  const [hashedKey, setHashedKey] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [result, setResult] = useState<boolean | null>(null);
+
+  const client = axios(
+    publicKey,
+    signature,
+    nftMetadata &&
+      sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))))
+  );
 
   useEffect(() => {
     const ve_publicKey = sessionStorage.getItem('ve_publicKey');
     const ve_signature = sessionStorage.getItem('ve_signature');
-    const ve_text = sessionStorage.getItem('ve_text');
+    const ve_nftMetadata = sessionStorage.getItem('ve_nftMetadata');
     const ve_result = sessionStorage.getItem('ve_result');
     if (ve_publicKey) setPublicKey(ve_publicKey);
     if (ve_signature) setSignature(ve_signature);
-    if (ve_text) setText(ve_text);
+    if (ve_nftMetadata) setNftMetadata(ve_nftMetadata);
     if (ve_result)
       setResult(
         ve_result === 'true' ? true : ve_result === 'false' ? false : null
@@ -29,7 +40,6 @@ const Verification = () => {
   }, []);
 
   const handlePublicKey = (val: string) => {
-    console.log('val :>> ', val);
     setPublicKey(val);
     sessionStorage.setItem('ve_publicKey', val);
   };
@@ -37,9 +47,9 @@ const Verification = () => {
     setSignature(val);
     sessionStorage.setItem('ve_signature', val);
   };
-  const handleText = (val: string) => {
-    setText(val);
-    sessionStorage.setItem('ve_text', val);
+  const handleNftMetadata = (val: string) => {
+    setNftMetadata(val);
+    sessionStorage.setItem('ve_nftMetadata', val);
   };
   const handleResult = (res: boolean | null) => {
     setResult(res);
@@ -49,12 +59,13 @@ const Verification = () => {
     setError(err);
     sessionStorage.setItem('ve_error', err);
   };
-
   const verifySig = async () => {
     const b_publicKey = Buffer.from(publicKey, 'hex');
-    const b_challenge = Buffer.from(sha256(text), 'hex');
+    const b_challenge = Buffer.from(
+      sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))),
+      'hex'
+    );
     const b_signature = Buffer.from(signature, 'hex');
-
     dilithiumVerifySig({
       publicKey: b_publicKey,
       challenge: b_challenge,
@@ -63,6 +74,14 @@ const Verification = () => {
       .then((res: boolean) => {
         handleError('');
         handleResult(res);
+        if (res)
+          setHashedKey(
+            sha256(
+              signature +
+                JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))
+            )
+          );
+        else setHashedKey('');
         return res;
       })
       .catch((err: object) => {
@@ -71,25 +90,60 @@ const Verification = () => {
       });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getnftMetadata = async ({ queryKey }: any) => {
+    const [hashedKey] = queryKey;
+    const resp = await client.get(`/${hashedKey}`);
+    return resp.data;
+  };
+  const { data, isRefetching, isLoading, isFetching, refetch } = useQuery({
+    queryKey: [hashedKey],
+    queryFn: getnftMetadata,
+    enabled: !!hashedKey,
+  });
+  const postnftMetadata = async () => {
+    const data = await client.post('/', {
+      hashedKey,
+      nftMetadata: JSON.parse(nftMetadata.replace(/'/g, '"')),
+    });
+    return data;
+  };
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: postnftMetadata,
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
   return (
     <TabLayout>
       <div className='flex flex-col gap-10 pb-8 mt-10'>
         {result !== null && (
-          <span
-            className={`pl-4 border border-l-8 ${
-              result ? 'border-green-500' : 'border-gray-500'
-            }`}
-          >
-            {result
-              ? 'Successfully verified your signature'
-              : 'Failed to verify your signature'}
-          </span>
+          <div className='relative w-full py-4'>
+            <span
+              className={`pl-4 py-2 border border-l-8 w-full absolute ${
+                result ? 'border-green-500' : 'border-gray-500'
+              }`}
+            >
+              {result
+                ? 'Successfully verified your signature'
+                : 'Failed to verify your signature'}
+            </span>
+            <span
+              className=' absolute right-3 top-6 rounded-full bg-gray-400/30 hover:bg-gray-400/40 px-2 cursor-pointer'
+              onClick={() => setResult(null)}
+            >
+              X
+            </span>
+          </div>
         )}
         <div className='flex flex-col gap-4'>
           <Field
             label='Public Key'
             name='public_key'
             placeholder='Input public key to verify Signature'
+            rows={2}
             value={publicKey}
             onChange={handlePublicKey}
           />
@@ -97,24 +151,56 @@ const Verification = () => {
             label='Signature'
             name='signature'
             placeholder='Input Signature to verify'
+            rows={2}
             value={signature}
             onChange={handleSignature}
           />
           <Field
-            label='Text'
-            description='Text must be 32 bytes long. ex: 0e4222c411e8e688403c2cc2a3aadb9bcdd0947cf082b30b268fc91bc7dafaca'
-            name='text'
-            placeholder='Input text to verify Signature'
-            value={text}
-            onChange={handleText}
+            label='nftMetadata'
+            description='nftMetadata must be Object'
+            name='nftMetadata'
+            placeholder='Input nftMetadata to verify Signature'
+            rows={8}
+            value={nftMetadata}
+            onChange={handleNftMetadata}
+          />
+          <Button
+            label='Verify'
+            onClick={() => {
+              verifySig();
+            }}
           />
         </div>
-        <Button
-          label='Verify'
-          onClick={() => {
-            verifySig();
-          }}
-        />
+
+        <div className='flex flex-col gap-4'>
+          <Field
+            label='Hashed Key'
+            name='hashedKey'
+            placeholder='Input hashed key to save nftMetadata'
+            rows={1}
+            value={hashedKey}
+            onChange={setHashedKey}
+          />
+          {(isRefetching || isLoading || isFetching) &&
+            'Checking on duplication...'}
+          {data?.data ? JSON.stringify(data?.data) : ''}
+          <Button
+            label='Post'
+            onClick={() => {
+              mutate();
+            }}
+            disabled={
+              hashedKey.length === 0 ||
+              result !== true ||
+              isPending ||
+              data?.data ||
+              isRefetching ||
+              isLoading ||
+              isFetching
+            }
+          />
+        </div>
+
         {error && (
           <span className='pl-4 border border-l-8 border-gray-500'>
             {error}

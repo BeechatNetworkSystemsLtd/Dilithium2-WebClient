@@ -12,22 +12,22 @@ const Signing = () => {
     publicKey: '',
     secretKey: '',
   });
-  const [text, setText] = useState<string>('');
+  const [nftMetadata, setNftMetadata] = useState<string>('');
   const [signature, setSignature] = useState<string>('');
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const si_publicKey = sessionStorage.getItem('si_publicKey');
     const si_secretKey = sessionStorage.getItem('si_secretKey');
-    const si_text = sessionStorage.getItem('si_text');
+    const si_nftMetadata = sessionStorage.getItem('si_nftMetadata');
     const si_signature = sessionStorage.getItem('si_signature');
     if (si_publicKey && si_secretKey)
       setKeys({
         publicKey: si_publicKey,
         secretKey: si_secretKey,
       });
-    if (si_text && si_signature) {
-      setText(si_text);
+    if (si_nftMetadata && si_signature) {
+      setNftMetadata(si_nftMetadata);
       setSignature(si_signature);
     }
   }, []);
@@ -64,12 +64,16 @@ const Signing = () => {
   };
 
   const sign = async () => {
-    const b_secretKey = Buffer.from(keys.secretKey, 'hex');
-    const b_challenge = Buffer.from(sha256(text), 'hex');
+    const secretKey = Buffer.from(keys.secretKey, 'hex');
+
+    const challenge = Buffer.from(
+      sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))),
+      'hex'
+    );
 
     const data = await dilithiumSign({
-      secretKey: b_secretKey,
-      challenge: b_challenge,
+      secretKey,
+      challenge,
     })
       .then((res: boolean) => {
         setError('');
@@ -79,7 +83,7 @@ const Signing = () => {
         setError(err.toString());
       });
 
-    sessionStorage.setItem('si_text', text);
+    sessionStorage.setItem('si_nftMetadata', nftMetadata);
     sessionStorage.setItem('si_signature', data.toString('hex'));
 
     setSignature(data.toString('hex'));
@@ -114,12 +118,12 @@ const Signing = () => {
 
         <div className='flex flex-col gap-4 pb-8'>
           <Field
-            label='Text'
-            description='Text must be 32 bytes long. ex: 0e4222c411e8e688403c2cc2a3aadb9bcdd0947cf082b30b268fc91bc7dafaca'
-            name='text'
-            placeholder='Input text to generate Signature'
-            value={text}
-            onChange={setText}
+            label='nftMetadata'
+            description='nftMetadata must be Object'
+            name='nftMetadata'
+            placeholder='Input nftMetadata to generate Signature'
+            value={nftMetadata}
+            onChange={setNftMetadata}
             rows={3}
           />
           <Field
@@ -133,7 +137,7 @@ const Signing = () => {
           <Button
             label='Sign'
             onClick={() => sign()}
-            disabled={text.length === 0}
+            disabled={nftMetadata.length === 0}
           />
           {error && (
             <span className='pl-4 border border-l-8 border-gray-500'>
