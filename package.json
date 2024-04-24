@@ -12,6 +12,8 @@
   "dependencies": {
     "@beechatnetwork/lib-dqx": "^0.0.8",
     "@reduxjs/toolkit": "^1.9.6",
+    "@types/js-cookie": "^3.0.6",
+    "js-sha256": "^0.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-native-nfc-manager": "^3.14.14",

@@ -25,6 +25,7 @@ const TabLayout: React.FC<TabLayoutProps> = ({ children }) => {
               className={`w-full p-4 md:p-8 text-2xl  ${
                 pathname === tab.link ? '' : 'bg-gray-50 opacity-50 shadow-sm'
               }`}
+              key={tab.label}
             >
               {tab.label}
             </Link>
