@@ -43,8 +43,10 @@ const Signing = () => {
   };
 
   const generateKeys = async () => {
+    const byteArray = new Uint8Array(10);
+    const randomBytes = await crypto.getRandomValues(byteArray);
     const data = await dilithiumGenKeyPair({
-      randomBytes: (size = 2) => Buffer.alloc(size),
+      randomBytes: () => randomBytes,
     })
       .then((res: object) => {
         setError('');
