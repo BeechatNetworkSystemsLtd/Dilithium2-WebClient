@@ -127,9 +127,21 @@ const Signing = () => {
             rows={3}
           />
           <Field
+            label='Challenge'
+            description={`Challenge code will be generated from nftMetadata`}
+            name='challenge'
+            rows={1}
+            placeholder='challenge'
+            value={
+              nftMetadata &&
+              sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))))
+            }
+            readOnly={true}
+          />
+          <Field
             label='Signature'
             name='signature'
-            rows={7}
+            rows={4}
             placeholder='Signature'
             value={signature}
             readOnly={true}
