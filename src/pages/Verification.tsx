@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import TabLayout from '@components/Layout/TabLayout';
 import Field from '~/components/Field';
@@ -40,24 +41,44 @@ const Verification = () => {
   }, []);
 
   const handlePublicKey = (val: string) => {
-    setPublicKey(val);
-    sessionStorage.setItem('ve_publicKey', val);
+    try {
+      setPublicKey(val);
+      sessionStorage.setItem('ve_publicKey', val);
+    } catch (err: any) {
+      setError(err.toString());
+    }
   };
   const handleSignature = (val: string) => {
-    setSignature(val);
-    sessionStorage.setItem('ve_signature', val);
+    try {
+      setSignature(val);
+      sessionStorage.setItem('ve_signature', val);
+    } catch (err: any) {
+      setError(err.toString());
+    }
   };
   const handleNftMetadata = (val: string) => {
-    setNftMetadata(val);
-    sessionStorage.setItem('ve_nftMetadata', val);
+    try {
+      setNftMetadata(val);
+      sessionStorage.setItem('ve_nftMetadata', val);
+    } catch (err: any) {
+      setError(err.toString());
+    }
   };
   const handleResult = (res: boolean | null) => {
-    setResult(res);
-    sessionStorage.setItem('ve_result', `${res}`);
+    try {
+      setResult(res);
+      sessionStorage.setItem('ve_result', `${res}`);
+    } catch (err: any) {
+      setError(err.toString());
+    }
   };
   const handleError = (err: string) => {
-    setError(err);
-    sessionStorage.setItem('ve_error', err);
+    try {
+      setError(err);
+      sessionStorage.setItem('ve_error', err);
+    } catch (err: any) {
+      setError(err.toString());
+    }
   };
   const verifySig = async () => {
     const b_publicKey = Buffer.from(publicKey, 'hex');
@@ -78,7 +99,9 @@ const Verification = () => {
           setHashedKey(
             sha256(
               signature +
-                JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))
+                JSON.stringify(
+                  signature + JSON.parse(nftMetadata.replace(/'/g, '"'))
+                )
             )
           );
         else setHashedKey('');
@@ -103,8 +126,7 @@ const Verification = () => {
   });
   const postnftMetadata = async () => {
     const data = await client.post('/', {
-      hashedKey,
-      nftMetadata: JSON.parse(nftMetadata.replace(/'/g, '"')),
+      metadata: JSON.parse(nftMetadata.replace(/'/g, '"')),
     });
     return data;
   };
@@ -131,7 +153,7 @@ const Verification = () => {
                 : 'Failed to verify your signature'}
             </span>
             <span
-              className=' absolute right-3 top-6 rounded-full bg-gray-400/30 hover:bg-gray-400/40 px-2 cursor-pointer'
+              className='absolute px-2 rounded-full cursor-pointer right-3 top-6 bg-gray-400/30 hover:bg-gray-400/40'
               onClick={() => setResult(null)}
             >
               X
@@ -195,9 +217,9 @@ const Verification = () => {
           />
           {(isRefetching || isLoading || isFetching) &&
             'Checking on duplication...'}
-          {data?.data ? JSON.stringify(data?.data) : ''}
+          {data?.data ? 'Exist on database' : ''}
           <Button
-            label='Post'
+            label={isPending ? 'Saving...' : 'Post'}
             onClick={() => {
               mutate();
             }}

@@ -17,10 +17,10 @@ const Signing = () => {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    const si_publicKey = sessionStorage.getItem('si_publicKey');
-    const si_secretKey = sessionStorage.getItem('si_secretKey');
-    const si_nftMetadata = sessionStorage.getItem('si_nftMetadata');
-    const si_signature = sessionStorage.getItem('si_signature');
+    const si_publicKey = localStorage.getItem('si_publicKey');
+    const si_secretKey = localStorage.getItem('si_secretKey');
+    const si_nftMetadata = localStorage.getItem('si_nftMetadata');
+    const si_signature = localStorage.getItem('si_signature');
     if (si_publicKey && si_secretKey)
       setKeys({
         publicKey: si_publicKey,
@@ -34,12 +34,12 @@ const Signing = () => {
 
   const handlePublicKey = (val: string) => {
     setKeys({ ...keys, publicKey: val });
-    sessionStorage.setItem('si_publicKey', val);
+    localStorage.setItem('si_publicKey', val);
   };
 
   const handleSecretKey = (val: string) => {
     setKeys({ ...keys, secretKey: val });
-    sessionStorage.setItem('si_secretKey', val);
+    localStorage.setItem('si_secretKey', val);
   };
 
   const generateKeys = async () => {
@@ -55,8 +55,8 @@ const Signing = () => {
       .catch((err: object) => {
         setError(err.toString());
       });
-    sessionStorage.setItem('si_publicKey', data.publicKey.toString('hex'));
-    sessionStorage.setItem('si_secretKey', data.secretKey.toString('hex'));
+    localStorage.setItem('si_publicKey', data.publicKey.toString('hex'));
+    localStorage.setItem('si_secretKey', data.secretKey.toString('hex'));
     setKeys({
       publicKey: data.publicKey.toString('hex'),
       secretKey: data.secretKey.toString('hex'),
@@ -83,8 +83,8 @@ const Signing = () => {
         setError(err.toString());
       });
 
-    sessionStorage.setItem('si_nftMetadata', nftMetadata);
-    sessionStorage.setItem('si_signature', data.toString('hex'));
+    localStorage.setItem('si_nftMetadata', nftMetadata);
+    localStorage.setItem('si_signature', data.toString('hex'));
 
     setSignature(data.toString('hex'));
   };
