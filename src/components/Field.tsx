@@ -9,17 +9,21 @@ interface FieldProps {
     placeholder?: string;
     disabled?: boolean;
     readOnly?: boolean;
+    actions?: React.ReactChild;
     onChange?: (val: string) => void;
 }
 
-const Field: React.FC<FieldProps> = ({ label, description, name, value, disabled, readOnly, rows = 4, placeholder = "", onChange }) => {
+const Field: React.FC<FieldProps> = ({ label, description, name, value, disabled, readOnly, rows = 4, placeholder = "", onChange, actions }) => {
     return (
         <div className="flex flex-col w-full gap-2">
-            <div className="flex items-end gap-4">
-                <label htmlFor={name} className="text-xl">
-                    {label}
-                </label>
-                <span className="text-sm text-gray-500">{description}</span>
+            <div className="relative">
+                <div className="flex items-end gap-4">
+                    <label htmlFor={name} className="text-xl">
+                        {label}
+                    </label>
+                    <span className="text-sm text-gray-500">{description}</span>
+                </div>
+                {actions}
             </div>
             <textarea
                 id={name}

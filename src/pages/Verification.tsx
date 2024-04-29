@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import TabLayout from "@components/Layout/TabLayout";
 import Field from "~/components/Field";
 import Button from "~/components/Button";
+import FileInput from "~/components/FileInput";
 // @ts-ignore
 import { dilithiumVerifySig } from "@beechatnetwork/lib-dqx";
 import { Buffer } from "buffer/index.js";
@@ -13,22 +14,25 @@ import axios from "@utils/axios";
 
 const Verification = () => {
     const [publicKey, setPublicKey] = useState<string>("");
+    const [metadata1, setMetadata1] = useState<string>("");
+    const [metadata2, setMetadata2] = useState<string>("");
+    const [challenge, setChallenge] = useState<string>("");
     const [signature, setSignature] = useState<string>("");
-    const [nftMetadata, setNftMetadata] = useState<string>("");
-    const [hashedKey, setHashedKey] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [result, setResult] = useState<boolean | null>(null);
 
-    const client = axios(publicKey, signature, nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))));
+    const client = axios(publicKey, signature, challenge);
 
     useEffect(() => {
         const ve_publicKey = sessionStorage.getItem("ve_publicKey");
         const ve_signature = sessionStorage.getItem("ve_signature");
-        const ve_nftMetadata = sessionStorage.getItem("ve_nftMetadata");
+        const ve_metadata1 = sessionStorage.getItem("ve_metadata1");
+        const ve_metadata2 = sessionStorage.getItem("ve_metadata2");
         const ve_result = sessionStorage.getItem("ve_result");
         if (ve_publicKey) setPublicKey(ve_publicKey);
         if (ve_signature) setSignature(ve_signature);
-        if (ve_nftMetadata) setNftMetadata(ve_nftMetadata);
+        if (ve_metadata1) setMetadata1(ve_metadata1);
+        if (ve_metadata2) setMetadata2(ve_metadata2);
         if (ve_result) setResult(ve_result === "true" ? true : ve_result === "false" ? false : null);
     }, []);
 
@@ -48,10 +52,19 @@ const Verification = () => {
             setError(err.toString());
         }
     };
-    const handleNftMetadata = (val: string) => {
+    const handleMetadata1 = (val: string) => {
         try {
-            setNftMetadata(val);
-            sessionStorage.setItem("ve_nftMetadata", val);
+            setMetadata1(val);
+            sessionStorage.setItem("ve_metadata1", val);
+        } catch (err: any) {
+            setError(err.toString());
+        }
+    };
+    const handleMetadata2 = (val: string) => {
+        try {
+            setChallenge(sha256(val));
+            setMetadata2(val);
+            sessionStorage.setItem("ve_metadata2", val);
         } catch (err: any) {
             setError(err.toString());
         }
@@ -74,18 +87,18 @@ const Verification = () => {
     };
     const verifySig = async () => {
         const b_publicKey = Buffer.from(publicKey, "hex");
-        const b_challenge = Buffer.from(sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))), "hex");
+        const hashedKey = Buffer.from(sha256(JSON.stringify(JSON.parse(metadata2.replace(/'/g, '"')))), "hex");
         const b_signature = Buffer.from(signature, "hex");
         dilithiumVerifySig({
             publicKey: b_publicKey,
-            challenge: b_challenge,
+            challenge: hashedKey,
             signature: b_signature,
         })
             .then((res: boolean) => {
                 handleError("");
                 handleResult(res);
-                if (res) setHashedKey(sha256(signature + JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))));
-                else setHashedKey("");
+                // if (res) setHashedKey(sha256(signature + JSON.stringify(JSON.parse(metadata1.replace(/'/g, '"')))));
+                // else setHashedKey("");
                 return res;
             })
             .catch((err: object) => {
@@ -95,25 +108,28 @@ const Verification = () => {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const getnftMetadata = async ({ queryKey }: any) => {
-        const [hashedKey] = queryKey;
-        const resp = await client.get(`/${hashedKey}`);
-        return resp.data;
+    const getMetadata = async ({ queryKey }: any) => {
+        const [metadata1] = queryKey;
+        const hashedkey = sha256(JSON.stringify(JSON.parse(metadata1.replace(/'/g, '"'))));
+        const resp = await client.get(`/${hashedkey}`);
+
+        return resp;
     };
     const { data, isRefetching, isLoading, isFetching, refetch } = useQuery({
-        queryKey: [hashedKey],
-        queryFn: getnftMetadata,
-        enabled: !!hashedKey,
+        queryKey: [metadata1],
+        queryFn: getMetadata,
+        enabled: !!metadata1,
     });
-    const postnftMetadata = async () => {
+    const postMetadata = async () => {
         const data = await client.post("/", {
-            metadata: JSON.parse(nftMetadata.replace(/'/g, '"')),
+            metadata1: JSON.parse(metadata1.replace(/'/g, '"')),
+            metadata2: JSON.parse(metadata2.replace(/'/g, '"')),
         });
         return data;
     };
 
     const { mutate, isPending } = useMutation({
-        mutationFn: postnftMetadata,
+        mutationFn: postMetadata,
         onSuccess: () => {
             refetch();
         },
@@ -135,6 +151,7 @@ const Verification = () => {
                         </span>
                     </div>
                 )}
+
                 <div className="flex flex-col gap-4">
                     <Field
                         label="Public Key"
@@ -145,14 +162,46 @@ const Verification = () => {
                         onChange={handlePublicKey}
                     />
                     <Field
-                        label="Challenge"
-                        description={`Challenge code will be generated from metadata`}
-                        name="challenge"
-                        rows={1}
-                        placeholder="challenge"
-                        value={nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))) + publicKey)}
-                        readOnly={true}
+                        label="Metadata 1"
+                        description="Metadata 1 must be Object"
+                        name="metadata1"
+                        rows={4}
+                        placeholder="Input Metadata 1 to generate hashed key"
+                        value={metadata1}
+                        onChange={handleMetadata1}
                     />
+                    <Field
+                        label="Metadata 2"
+                        description="Metadata 2 must be Object"
+                        name="metadata"
+                        placeholder="Input Metadata to verify Signature"
+                        rows={4}
+                        value={metadata2}
+                        onChange={handleMetadata2}
+                        actions={<FileInput className="absolute right-0 top-0" handleData={handleMetadata2} />}
+                    />
+                    challenge code is: {challenge}
+                    <div className="flex flex-col gap-4">
+                        <Field
+                            label="Hashed Key"
+                            description="32bit string"
+                            name="hashedKey"
+                            placeholder="Hashed Key will be generated from Metadata 1"
+                            rows={1}
+                            readOnly={true}
+                            value={(() => {
+                                try {
+                                    return metadata1 && sha256(JSON.stringify(JSON.parse(metadata1.replace(/'/g, '"'))));
+                                } catch (e) {
+                                    // handle error and provide a fallback value or action
+                                    console.error("Error when parsing metadata1: ", e);
+                                    return "";
+                                }
+                            })()}
+                        />
+                        {(isRefetching || isLoading || isFetching) && "Checking on duplication..."}
+                        <span className="truncate ...">{JSON.stringify(data?.data)}</span>
+                    </div>
                     <Field
                         label="Signature"
                         name="signature"
@@ -160,15 +209,6 @@ const Verification = () => {
                         rows={2}
                         value={signature}
                         onChange={handleSignature}
-                    />
-                    <Field
-                        label="Metadata"
-                        description="Metadata must be Object"
-                        name="metadata"
-                        placeholder="Input Metadata to verify Signature"
-                        rows={8}
-                        value={nftMetadata}
-                        onChange={handleNftMetadata}
                     />
                     <div className="flex flex-row gap-4">
                         <Button
@@ -178,27 +218,24 @@ const Verification = () => {
                             }}
                         />
                         <Button
+                            label="Reset"
+                            onClick={() => {
+                                handlePublicKey("");
+                                handleMetadata1("");
+                                handleMetadata2("");
+                                handleSignature("");
+                                handleError("");
+                                handleResult(null);
+                            }}
+                        />
+                        <Button
                             label={isPending ? "Saving..." : "Post"}
                             onClick={() => {
                                 mutate();
                             }}
-                            disabled={hashedKey.length === 0 || result !== true || isPending || data?.data || isRefetching || isLoading || isFetching}
+                            disabled={metadata1.length === 0 || result !== true || isPending || data?.data || isRefetching || isLoading || isFetching}
                         />
                     </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                    <Field
-                        label="Hashed Key"
-                        name="hashedKey"
-                        placeholder="Input hashed key to save metadata"
-                        rows={1}
-                        readOnly={true}
-                        value={hashedKey}
-                        onChange={setHashedKey}
-                    />
-                    {(isRefetching || isLoading || isFetching) && "Checking on duplication..."}
-                    <span className="truncate ...">{JSON.stringify(data?.data)}</span>
                 </div>
 
                 {error && <span className="pl-4 border border-l-8 border-gray-500">{error}</span>}

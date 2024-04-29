@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import TabLayout from "@components/Layout/TabLayout";
 import Field from "~/components/Field";
 import Button from "~/components/Button";
+import FileInput from "~/components/FileInput";
 // @ts-ignore
 import { dilithiumGenKeyPair, dilithiumSign } from "@beechatnetwork/lib-dqx";
 import { Buffer } from "buffer/index.js";
@@ -12,22 +14,22 @@ const Signing = () => {
         publicKey: "",
         secretKey: "",
     });
-    const [nftMetadata, setNftMetadata] = useState<string>("");
+    const [metadata2, setMetadata2] = useState<string>("");
     const [signature, setSignature] = useState<string>("");
     const [error, setError] = useState<string>("");
 
     useEffect(() => {
         const si_publicKey = localStorage.getItem("si_publicKey");
         const si_secretKey = localStorage.getItem("si_secretKey");
-        const si_nftMetadata = localStorage.getItem("si_nftMetadata");
+        const si_metadata2 = localStorage.getItem("si_metadata2");
         const si_signature = localStorage.getItem("si_signature");
         if (si_publicKey && si_secretKey)
             setKeys({
                 publicKey: si_publicKey,
                 secretKey: si_secretKey,
             });
-        if (si_nftMetadata && si_signature) {
-            setNftMetadata(si_nftMetadata);
+        if (si_metadata2 && si_signature) {
+            setMetadata2(si_metadata2);
             setSignature(si_signature);
         }
     }, []);
@@ -40,6 +42,15 @@ const Signing = () => {
     const handleSecretKey = (val: string) => {
         setKeys({ ...keys, secretKey: val });
         localStorage.setItem("si_secretKey", val);
+    };
+
+    const handleMetadata2 = (val: string) => {
+        try {
+            setMetadata2(val);
+            localStorage.setItem("si_metadata2", val);
+        } catch (err: any) {
+            setError(err.toString());
+        }
     };
 
     const generateKeys = async () => {
@@ -65,12 +76,11 @@ const Signing = () => {
 
     const sign = async () => {
         const secretKey = Buffer.from(keys.secretKey, "hex");
-
-        const challenge = Buffer.from(sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"')))), "hex");
+        const hashedKey = Buffer.from(sha256(JSON.stringify(JSON.parse(metadata2.replace(/'/g, '"')))), "hex");
 
         const data = await dilithiumSign({
             secretKey,
-            challenge,
+            challenge: hashedKey,
         })
             .then((res: boolean) => {
                 setError("");
@@ -80,7 +90,7 @@ const Signing = () => {
                 setError(err.toString());
             });
 
-        localStorage.setItem("si_nftMetadata", nftMetadata);
+        localStorage.setItem("si_metadata2", metadata2);
         localStorage.setItem("si_signature", data.toString("hex"));
 
         setSignature(data.toString("hex"));
@@ -115,15 +125,16 @@ const Signing = () => {
 
                 <div className="flex flex-col gap-4 pb-8">
                     <Field
-                        label="Metadata"
-                        description="nftMetadata must be Object"
-                        name="metadata"
+                        label="Metadata 2"
+                        description="Metadata 2 must be Object"
+                        name="metadata2"
                         placeholder="Input metadata to generate Signature"
-                        value={nftMetadata}
-                        onChange={setNftMetadata}
+                        value={metadata2}
+                        onChange={setMetadata2}
                         rows={3}
+                        actions={<FileInput className="absolute right-0 top-0" handleData={handleMetadata2} />}
                     />
-                    <Field
+                    {/* <Field
                         label="Challenge"
                         description={`Challenge code will be generated from metadata`}
                         name="challenge"
@@ -131,17 +142,33 @@ const Signing = () => {
                         placeholder="challenge"
                         value={(() => {
                             try {
-                                return nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))) + keys.publicKey);
+                                return metadata2 && sha256(JSON.stringify(JSON.parse(metadata2.replace(/'/g, '"'))) + keys.publicKey);
                             } catch (e) {
                                 // handle error and provide a fallback value or action
-                                console.error("Error when parsing nftMetadata: ", e);
+                                console.error("Error when parsing metadata2: ", e);
                                 return "";
                             }
                         })()}
                         readOnly={true}
-                    />
+                    /> */}
                     <Field label="Signature" name="signature" rows={4} placeholder="Signature" value={signature} readOnly={true} />
-                    <Button label="Sign" onClick={() => sign()} disabled={nftMetadata.length === 0} />
+                    <div className="flex flex-row gap-4">
+                        <Button label="Sign" onClick={() => sign()} disabled={metadata2.length === 0} />
+                        <Button
+                            label="Reset"
+                            onClick={async () => {
+                                setKeys({
+                                    publicKey: "",
+                                    secretKey: "",
+                                });
+                                setError("");
+                                handleMetadata2("");
+                                setSignature("");
+                                localStorage.setItem("si_publicKey", "");
+                                localStorage.setItem("si_secretKey", "");
+                            }}
+                        />
+                    </div>
                     {error && <span className="pl-4 border border-l-8 border-gray-500">{error}</span>}
                 </div>
             </div>
