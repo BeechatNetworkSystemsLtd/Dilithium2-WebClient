@@ -129,7 +129,15 @@ const Signing = () => {
                         name="challenge"
                         rows={1}
                         placeholder="challenge"
-                        value={nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))))}
+                        value={(() => {
+                            try {
+                                return nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))) + keys.publicKey);
+                            } catch (e) {
+                                // handle error and provide a fallback value or action
+                                console.error("Error when parsing nftMetadata: ", e);
+                                return "";
+                            }
+                        })()}
                         readOnly={true}
                     />
                     <Field label="Signature" name="signature" rows={4} placeholder="Signature" value={signature} readOnly={true} />

@@ -150,7 +150,7 @@ const Verification = () => {
                         name="challenge"
                         rows={1}
                         placeholder="challenge"
-                        value={nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))))}
+                        value={nftMetadata && sha256(JSON.stringify(JSON.parse(nftMetadata.replace(/'/g, '"'))) + publicKey)}
                         readOnly={true}
                     />
                     <Field
