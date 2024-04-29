@@ -146,7 +146,7 @@ const Verification = () => {
                     />
                     <Field
                         label="Challenge"
-                        description={`Challenge code will be generated from nftMetadata`}
+                        description={`Challenge code will be generated from metadata`}
                         name="challenge"
                         rows={1}
                         placeholder="challenge"
@@ -162,40 +162,43 @@ const Verification = () => {
                         onChange={handleSignature}
                     />
                     <Field
-                        label="nftMetadata"
-                        description="nftMetadata must be Object"
-                        name="nftMetadata"
-                        placeholder="Input nftMetadata to verify Signature"
+                        label="Metadata"
+                        description="Metadata must be Object"
+                        name="metadata"
+                        placeholder="Input Metadata to verify Signature"
                         rows={8}
                         value={nftMetadata}
                         onChange={handleNftMetadata}
                     />
-                    <Button
-                        label="Verify"
-                        onClick={() => {
-                            verifySig();
-                        }}
-                    />
+                    <div className="flex flex-row gap-4">
+                        <Button
+                            label="Verify"
+                            onClick={() => {
+                                verifySig();
+                            }}
+                        />
+                        <Button
+                            label={isPending ? "Saving..." : "Post"}
+                            onClick={() => {
+                                mutate();
+                            }}
+                            disabled={hashedKey.length === 0 || result !== true || isPending || data?.data || isRefetching || isLoading || isFetching}
+                        />
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-4">
                     <Field
                         label="Hashed Key"
                         name="hashedKey"
-                        placeholder="Input hashed key to save nftMetadata"
+                        placeholder="Input hashed key to save metadata"
                         rows={1}
+                        readOnly={true}
                         value={hashedKey}
                         onChange={setHashedKey}
                     />
                     {(isRefetching || isLoading || isFetching) && "Checking on duplication..."}
                     <span className="truncate ...">{JSON.stringify(data?.data)}</span>
-                    <Button
-                        label={isPending ? "Saving..." : "Post"}
-                        onClick={() => {
-                            mutate();
-                        }}
-                        disabled={hashedKey.length === 0 || result !== true || isPending || data?.data || isRefetching || isLoading || isFetching}
-                    />
                 </div>
 
                 {error && <span className="pl-4 border border-l-8 border-gray-500">{error}</span>}

@@ -115,17 +115,17 @@ const Signing = () => {
 
                 <div className="flex flex-col gap-4 pb-8">
                     <Field
-                        label="nftMetadata"
+                        label="Metadata"
                         description="nftMetadata must be Object"
-                        name="nftMetadata"
-                        placeholder="Input nftMetadata to generate Signature"
+                        name="metadata"
+                        placeholder="Input metadata to generate Signature"
                         value={nftMetadata}
                         onChange={setNftMetadata}
                         rows={3}
                     />
                     <Field
                         label="Challenge"
-                        description={`Challenge code will be generated from nftMetadata`}
+                        description={`Challenge code will be generated from metadata`}
                         name="challenge"
                         rows={1}
                         placeholder="challenge"
