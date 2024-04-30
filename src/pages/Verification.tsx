@@ -28,11 +28,13 @@ const Verification = () => {
         const ve_signature = sessionStorage.getItem("ve_signature");
         const ve_metadata1 = sessionStorage.getItem("ve_metadata1");
         const ve_metadata2 = sessionStorage.getItem("ve_metadata2");
+        const ve_challenge = sessionStorage.getItem("ve_challenge");
         const ve_result = sessionStorage.getItem("ve_result");
         if (ve_publicKey) setPublicKey(ve_publicKey);
         if (ve_signature) setSignature(ve_signature);
         if (ve_metadata1) setMetadata1(ve_metadata1);
         if (ve_metadata2) setMetadata2(ve_metadata2);
+        if (ve_challenge) setChallenge(ve_challenge);
         if (ve_result) setResult(ve_result === "true" ? true : ve_result === "false" ? false : null);
     }, []);
 
@@ -60,11 +62,19 @@ const Verification = () => {
             setError(err.toString());
         }
     };
+    const handleChallenge = (val: string) => {
+        try {
+            setChallenge(val);
+            sessionStorage.setItem("ve_challenge", val);
+        } catch (err: any) {
+            setError(err.toString());
+        }
+    };
     const handleMetadata2 = (val: string) => {
         try {
-            setChallenge(sha256(val));
             setMetadata2(val);
             sessionStorage.setItem("ve_metadata2", val);
+            handleChallenge(sha256(JSON.stringify(JSON.parse(val.replace(/'/g, '"')))));
         } catch (err: any) {
             setError(err.toString());
         }
@@ -87,11 +97,11 @@ const Verification = () => {
     };
     const verifySig = async () => {
         const b_publicKey = Buffer.from(publicKey, "hex");
-        const hashedKey = Buffer.from(sha256(JSON.stringify(JSON.parse(metadata2.replace(/'/g, '"')))), "hex");
+        const b_challenge = Buffer.from(sha256(JSON.stringify(JSON.parse(metadata2.replace(/'/g, '"')))), "hex");
         const b_signature = Buffer.from(signature, "hex");
         dilithiumVerifySig({
             publicKey: b_publicKey,
-            challenge: hashedKey,
+            challenge: b_challenge,
             signature: b_signature,
         })
             .then((res: boolean) => {
@@ -220,12 +230,13 @@ const Verification = () => {
                         <Button
                             label="Reset"
                             onClick={() => {
-                                handlePublicKey("");
-                                handleMetadata1("");
+                                // handlePublicKey("");
+                                // handleMetadata1("");
                                 handleMetadata2("");
-                                handleSignature("");
-                                handleError("");
-                                handleResult(null);
+                                // handleSignature("");
+                                // handleChallenge("");
+                                // handleError("");
+                                // handleResult(null);
                             }}
                         />
                         <Button
