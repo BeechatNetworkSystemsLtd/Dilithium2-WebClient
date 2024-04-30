@@ -75,8 +75,11 @@ const Verification = () => {
             setMetadata2(val);
             sessionStorage.setItem("ve_metadata2", val);
             handleChallenge(sha256(JSON.stringify(JSON.parse(val.replace(/'/g, '"')))));
+            setError("");
         } catch (err: any) {
-            setError(err.toString());
+            handleError(err.toString());
+            handleResult(null);
+            handleChallenge("");
         }
     };
     const handleResult = (res: boolean | null) => {
@@ -107,8 +110,6 @@ const Verification = () => {
             .then((res: boolean) => {
                 handleError("");
                 handleResult(res);
-                // if (res) setHashedKey(sha256(signature + JSON.stringify(JSON.parse(metadata1.replace(/'/g, '"')))));
-                // else setHashedKey("");
                 return res;
             })
             .catch((err: object) => {
@@ -120,10 +121,10 @@ const Verification = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetadata = async ({ queryKey }: any) => {
         const [metadata1] = queryKey;
-        const hashedkey = sha256(JSON.stringify(JSON.parse(metadata1.replace(/'/g, '"'))));
+        const hashedkey = sha256(metadata1);
         const resp = await client.get(`/${hashedkey}`);
 
-        return resp;
+        return resp.data;
     };
     const { data, isRefetching, isLoading, isFetching, refetch } = useQuery({
         queryKey: [metadata1],
@@ -132,7 +133,7 @@ const Verification = () => {
     });
     const postMetadata = async () => {
         const data = await client.post("/", {
-            metadata1: JSON.parse(metadata1.replace(/'/g, '"')),
+            metadata1: metadata1,
             metadata2: JSON.parse(metadata2.replace(/'/g, '"')),
         });
         return data;
@@ -148,6 +149,8 @@ const Verification = () => {
     return (
         <TabLayout>
             <div className="flex flex-col gap-10 pb-8 mt-10">
+                {error && <span className="pl-4 border border-l-8 border-gray-500">{error}</span>}
+
                 {result !== null && (
                     <div className="relative w-full py-4">
                         <span className={`pl-4 py-2 border border-l-8 w-full absolute ${result ? "border-green-500" : "border-gray-500"}`}>
@@ -173,7 +176,7 @@ const Verification = () => {
                     />
                     <Field
                         label="Metadata 1"
-                        description="Metadata 1 must be Object"
+                        description="Metadata 1 would be String"
                         name="metadata1"
                         rows={4}
                         placeholder="Input Metadata 1 to generate hashed key"
@@ -188,9 +191,9 @@ const Verification = () => {
                         rows={4}
                         value={metadata2}
                         onChange={handleMetadata2}
-                        actions={<FileInput className="absolute right-0 top-0" handleData={handleMetadata2} />}
+                        actions={<FileInput className="absolute top-0 right-0" handleData={handleMetadata2} />}
                     />
-                    challenge code is: {challenge}
+                    *challenge code is: {challenge}
                     <div className="flex flex-col gap-4">
                         <Field
                             label="Hashed Key"
@@ -199,15 +202,7 @@ const Verification = () => {
                             placeholder="Hashed Key will be generated from Metadata 1"
                             rows={1}
                             readOnly={true}
-                            value={(() => {
-                                try {
-                                    return metadata1 && sha256(JSON.stringify(JSON.parse(metadata1.replace(/'/g, '"'))));
-                                } catch (e) {
-                                    // handle error and provide a fallback value or action
-                                    console.error("Error when parsing metadata1: ", e);
-                                    return "";
-                                }
-                            })()}
+                            value={metadata1 && sha256(metadata1)}
                         />
                         {(isRefetching || isLoading || isFetching) && "Checking on duplication..."}
                         <span className="truncate ...">{JSON.stringify(data?.data)}</span>
@@ -230,13 +225,13 @@ const Verification = () => {
                         <Button
                             label="Reset"
                             onClick={() => {
-                                // handlePublicKey("");
-                                // handleMetadata1("");
+                                handlePublicKey("");
+                                handleMetadata1("");
                                 handleMetadata2("");
-                                // handleSignature("");
-                                // handleChallenge("");
-                                // handleError("");
-                                // handleResult(null);
+                                handleSignature("");
+                                handleChallenge("");
+                                handleError("");
+                                handleResult(null);
                             }}
                         />
                         <Button
@@ -248,8 +243,6 @@ const Verification = () => {
                         />
                     </div>
                 </div>
-
-                {error && <span className="pl-4 border border-l-8 border-gray-500">{error}</span>}
             </div>
         </TabLayout>
     );
