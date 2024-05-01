@@ -186,7 +186,7 @@ const Verification = () => {
                         onChange={handleMetadata1}
                         actions={
                             <EncodingTypeSelection
-                                className="absolute top-0 right-0"
+                                className="absolute top-0 right-0 hidden"
                                 handleData={(event) => {
                                     setEncodingType(event.currentTarget.value);
                                 }}
@@ -201,9 +201,12 @@ const Verification = () => {
                         rows={4}
                         value={metadata2}
                         onChange={handleMetadata2}
-                        actions={<FileInput className="absolute top-0 right-0" handleData={handleMetadata2} />}
+                        actions={<FileInput className="md:absolute top-0 right-0" handleData={handleMetadata2} />}
                     />
-                    *challenge code is: {challenge}
+                    <div className="overflow-auto">
+                        <span className=" font-normal text-xl">*challenge code: </span>
+                        <span className="overflow-auto">{challenge}</span>
+                    </div>
                     <div className="flex flex-col gap-4">
                         <Field
                             label="Hashed Key"
