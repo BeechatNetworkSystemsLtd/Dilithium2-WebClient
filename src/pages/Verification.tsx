@@ -4,6 +4,7 @@ import TabLayout from "@components/Layout/TabLayout";
 import Field from "~/components/Field";
 import Button from "~/components/Button";
 import FileInput from "~/components/FileInput";
+import EncodingTypeSelection from "~/components/EncodingTypeSelection";
 // @ts-ignore
 import { dilithiumVerifySig } from "@beechatnetwork/lib-dqx";
 import { Buffer } from "buffer/index.js";
@@ -20,6 +21,7 @@ const Verification = () => {
     const [signature, setSignature] = useState<string>("");
     const [error, setError] = useState<string>("");
     const [result, setResult] = useState<boolean | null>(null);
+    const [encodingType, setEncodingType] = useState<string>("hex");
 
     const client = axios(publicKey, signature, challenge);
 
@@ -182,6 +184,14 @@ const Verification = () => {
                         placeholder="Input Metadata 1 to generate hashed key"
                         value={metadata1}
                         onChange={handleMetadata1}
+                        actions={
+                            <EncodingTypeSelection
+                                className="absolute top-0 right-0"
+                                handleData={(event) => {
+                                    setEncodingType(event.currentTarget.value);
+                                }}
+                            />
+                        }
                     />
                     <Field
                         label="Metadata 2"
@@ -202,7 +212,7 @@ const Verification = () => {
                             placeholder="Hashed Key will be generated from Metadata 1"
                             rows={1}
                             readOnly={true}
-                            value={metadata1 && sha256(metadata1)}
+                            value={metadata1 && sha256(Buffer.from(metadata1, encodingType))}
                         />
                         {(isRefetching || isLoading || isFetching) && "Checking on duplication..."}
                         <span className="truncate ...">{JSON.stringify(data?.data)}</span>
