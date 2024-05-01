@@ -122,14 +122,14 @@ const Verification = () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetadata = async ({ queryKey }: any) => {
-        const [metadata1] = queryKey;
-        const hashedkey = sha256(metadata1);
+        const [metadata1, encodingType] = queryKey;
+        const hashedkey = sha256(Buffer.from(metadata1, encodingType));
         const resp = await client.get(`/${hashedkey}`);
 
         return resp.data;
     };
     const { data, isRefetching, isLoading, isFetching, refetch } = useQuery({
-        queryKey: [metadata1],
+        queryKey: [metadata1, encodingType],
         queryFn: getMetadata,
         enabled: !!metadata1,
     });
