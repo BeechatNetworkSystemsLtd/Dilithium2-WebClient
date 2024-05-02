@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 const TabList = [
     { link: "/signing", label: "Signing" },
     { link: "/verification", label: "Verification" },
+    { link: "/Modify", label: "Modify Data" },
 ];
 
 interface TabLayoutProps {

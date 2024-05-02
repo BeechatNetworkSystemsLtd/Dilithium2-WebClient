@@ -1,5 +1,6 @@
 import Signing from "~/pages/Signing.tsx";
 import Verification from "@pages/Verification.tsx";
+import Modify from "@pages/Modify.tsx";
 import { setupStore } from "@store/store.ts";
 import "@styles/index.css";
 import React from "react";
@@ -18,6 +19,10 @@ const router = createBrowserRouter([
     {
         path: "/verification",
         element: <Verification />,
+    },
+    {
+        path: "/modify",
+        element: <Modify />,
     },
     {
         path: "*",
