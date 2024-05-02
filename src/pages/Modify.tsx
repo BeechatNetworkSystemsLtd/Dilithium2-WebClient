@@ -208,13 +208,13 @@ const Verification = () => {
                             label="Hashed Key"
                             description="32bit string"
                             name="hashedKey"
-                            placeholder="Hashed Key will be generated from Metadata 1"
+                            placeholder="Input Hashed Key"
                             rows={1}
                             value={hashedKey}
                             onChange={handleHashedKey}
                         />
                         {(isRefetching || isLoading || isFetching) && "Loading data..."}
-                        <span className="truncate ...">{data ? JSON.stringify(data?.data) : "Not Exist"}</span>
+                        <span className="truncate ...">{data ? JSON.stringify(data?.data) : hashedKey && "Not Exist"}</span>
                     </div>
                     <Field
                         label="Public Key"
