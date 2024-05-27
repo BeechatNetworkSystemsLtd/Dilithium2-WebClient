@@ -123,8 +123,9 @@ const Verification = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetadata = async ({ queryKey }: any) => {
         const [metadata1, encodingType] = queryKey;
+
         const hashedkey = sha256(Buffer.from(metadata1, encodingType));
-        const resp = await client.get(`/${hashedkey}`);
+        const resp = await client.get(`/getByHashedKey/${hashedkey}`);
 
         return resp.data;
     };
@@ -201,13 +202,13 @@ const Verification = () => {
                         rows={4}
                         value={metadata2}
                         onChange={handleMetadata2}
-                        actions={<FileInput className="md:absolute top-0 right-0" handleData={handleMetadata2} />}
+                        actions={<FileInput className="top-0 right-0 md:absolute" handleData={handleMetadata2} />}
                     />
                     <div className="overflow-auto">
-                        <span className=" font-normal text-xl">*challenge code: </span>
+                        <span className="text-xl font-normal ">*challenge code: </span>
                         <span className="overflow-auto">{challenge}</span>
                     </div>
-                    <div className="flex flex-col gap-4">
+                    <div className="relative flex flex-col gap-4">
                         <Field
                             label="Hashed Key"
                             description="32bit string"
@@ -217,7 +218,7 @@ const Verification = () => {
                             readOnly={true}
                             value={metadata1 && sha256(Buffer.from(metadata1, encodingType))}
                         />
-                        {(isRefetching || isLoading || isFetching) && "Checking on duplication..."}
+                        {(isRefetching || isLoading || isFetching) && <span className="absolute -bottom-3 "> Checking on duplication...</span>}
                         <span className="truncate ...">{JSON.stringify(data?.data)}</span>
                     </div>
                     <Field

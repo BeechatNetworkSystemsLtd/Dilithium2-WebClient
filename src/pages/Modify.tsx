@@ -134,7 +134,7 @@ const Verification = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const getMetadata = async ({ queryKey }: any) => {
         const [hashedkey] = queryKey;
-        const resp = await client.get(`/${hashedkey}`);
+        const resp = await client.get(`/getByHashedKey/${hashedkey}`);
 
         return resp.data;
     };
@@ -232,10 +232,10 @@ const Verification = () => {
                         rows={4}
                         value={metadata2}
                         onChange={handleMetadata2}
-                        actions={<FileInput className="md:absolute top-0 right-0" handleData={handleMetadata2} />}
+                        actions={<FileInput className="top-0 right-0 md:absolute" handleData={handleMetadata2} />}
                     />
                     <div className="overflow-auto">
-                        <span className=" font-normal text-xl">*challenge code: </span>
+                        <span className="text-xl font-normal ">*challenge code: </span>
                         <span className="overflow-auto">{challenge}</span>
                     </div>
 
